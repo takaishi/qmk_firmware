@@ -39,7 +39,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_MINS,                           KC_EQL ,  KC_Y,  KC_U,    KC_I,    KC_O,    KC_P,    KC_BSLS, \
     KC_LCTL, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_LBRC,                           KC_RBRC,  KC_H,  KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, \
     KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_LBRC,                           KC_RBRC,  KC_N,  KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT, \
-    KC_LCTL, KC_LGUI, KC_LCTL,          KC_LALT, KC_LGUI, KC_L_SPC, KC_LALT,        KC_RGUI, KC_R_ENT, RAISE, KC_LEFT,          KC_DOWN, KC_UP,   KC_RGHT  \
+    KC_LCTL, KC_LGUI, KC_LCTL,          KC_LALT, KC_LGUI, LOWER, KC_LALT,        KC_RGUI, RAISE, RAISE, KC_LEFT,          KC_DOWN, KC_UP,   KC_RGHT  \
   ),
 
 
@@ -116,6 +116,9 @@ void persistent_default_layer_set(uint16_t default_layer) {
   default_layer_set(default_layer);
 }
 
+static bool lower_pressed = false;
+static bool raise_pressed = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
     case QWERTY:
@@ -127,21 +130,37 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
       break;
     case LOWER:
       if (record->event.pressed) {
+        lower_pressed = true;
+
         layer_on(_LOWER);
         update_tri_layer(_LOWER, _RAISE, _ADJUST);
       } else {
         layer_off(_LOWER);
         update_tri_layer(_LOWER, _RAISE, _ADJUST);
+
+        if (lower_pressed) {
+          register_code(KC_SPC);
+          unregister_code(KC_SPC);
+        }
+        lower_pressed = false;
       }
       return false;
       break;
     case RAISE:
       if (record->event.pressed) {
+        raise_pressed = true;
+
         layer_on(_RAISE);
         update_tri_layer(_LOWER, _RAISE, _ADJUST);
       } else {
         layer_off(_RAISE);
         update_tri_layer(_LOWER, _RAISE, _ADJUST);
+
+        if (raise_pressed) {
+          register_code(KC_ENT);
+          unregister_code(KC_ENT);
+        }
+        raise_pressed =false;
       }
       return false;
       break;
@@ -152,6 +171,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         layer_off(_ADJUST);
       }
       return false;
+      break;
+    default:
+      if (record->event.pressed) {
+        lower_pressed = false;
+        raise_pressed = false;
+      }
       break;
   }
   return true;
